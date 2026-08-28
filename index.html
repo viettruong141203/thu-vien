@@ -30,7 +30,7 @@
             position: relative;
         }
 
-        /* Nền Aurora chuyển động cực đẹp */
+        /* Nền Aurora */
         .aurora-bg {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             overflow: hidden; z-index: -1;
@@ -45,7 +45,7 @@
 
         @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(50px, 50px) scale(1.2); } }
 
-        /* Card chứa nội dung */
+        /* Khung kính chính */
         .glass-card {
             background: var(--glass-bg);
             backdrop-filter: blur(30px);
@@ -83,7 +83,7 @@
         .drop-zone-text span { color: #a78bfa; font-weight: 600; }
         #fileInput { display: none; }
 
-        /* Vùng hiển thị ảnh mượt mà */
+        /* Vùng hiển thị ảnh */
         .image-wrapper {
             position: relative;
             border-radius: 20px;
@@ -102,18 +102,33 @@
             border-radius: 20px;
         }
 
-        /* Loading Spinner chạy ngầm */
+        /* Nút hành động trước khi lưu */
+        .action-group {
+            display: none;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        .btn {
+            flex: 1; padding: 14px 10px; border-radius: 16px; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease; border: none; color: #fff;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3); }
+        .btn-outline { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+        /* Loading Spinner */
         .loading-overlay {
             position: absolute; top: 15px; right: 15px;
             background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
             padding: 8px 12px; border-radius: 20px;
-            display: flex; align-items: center; gap: 8px;
+            display: none; align-items: center; gap: 8px;
             font-size: 12px; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);
         }
         .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Hộp kết quả gọn gàng */
+        /* Hộp kết quả */
         .result-box {
             display: none; margin-top: 25px;
             background: rgba(255, 255, 255, 0.03);
@@ -135,6 +150,7 @@
         }
         .reset-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
 
+        /* Thông báo (Toast) */
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4);
@@ -153,7 +169,6 @@
         <div class="orb orb-2"></div>
     </div>
 
-    <!-- SVG Gradient Def -->
     <svg width="0" height="0">
         <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
@@ -163,20 +178,23 @@
 
     <div class="glass-card">
         
+        <!-- Màn hình chọn ảnh -->
         <div id="uploadSection">
             <div class="logo">
                 <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5-5-5 5h3v4h4v-4h3z"/></svg>
             </div>
             <h2>CloudLens</h2>
-            <p class="subtitle">Tự động nén và tải ảnh lên Google Drive</p>
+            <p class="subtitle">Bảo mật - Nhanh chóng - Tiện lợi</p>
 
             <div class="drop-zone" id="dropZone">
                 <span class="drop-zone-icon">📸</span>
                 <div class="drop-zone-text">Chạm để chọn hoặc <span>chụp ảnh</span></div>
+                <!-- accept="image/*" trên mobile sẽ cho phép cả chụp camera và chọn thư viện -->
                 <input type="file" id="fileInput" accept="image/*">
             </div>
         </div>
 
+        <!-- Màn hình xem trước & Trạng thái tải -->
         <div class="image-wrapper" id="imageWrapper">
             <img id="imagePreview" src="" alt="View">
             <div class="loading-overlay" id="loadingOverlay">
@@ -184,6 +202,13 @@
             </div>
         </div>
 
+        <!-- Nút xác nhận: Lưu Drive hoặc Chọn ảnh khác -->
+        <div class="action-group" id="confirmActions">
+            <button type="button" class="btn btn-outline" id="cancelBtn">Đổi ảnh khác</button>
+            <button type="button" class="btn btn-primary" id="saveBtn">Lưu lên Drive</button>
+        </div>
+
+        <!-- Màn hình kết quả -->
         <div class="result-box" id="resultBox">
             <div class="result-row">
                 <div class="label">ID Bảo mật</div>
@@ -196,7 +221,8 @@
             </div>
         </div>
 
-        <button type="button" class="reset-btn" id="resetBtn">Tải ảnh khác</button>
+        <!-- Nút Reset cuối cùng -->
+        <button type="button" class="reset-btn" id="resetBtn">Tải ảnh mới ➕</button>
     </div>
 
     <div class="toast" id="toastMsg">Thành công!</div>
@@ -211,11 +237,18 @@
         const imageWrapper = document.getElementById('imageWrapper');
         const imagePreview = document.getElementById('imagePreview');
         const loadingOverlay = document.getElementById('loadingOverlay');
+        const confirmActions = document.getElementById('confirmActions');
+        
         const resultBox = document.getElementById('resultBox');
         const displayId = document.getElementById('displayId');
         const displayLink = document.getElementById('displayLink');
+        
+        const cancelBtn = document.getElementById('cancelBtn');
+        const saveBtn = document.getElementById('saveBtn');
         const resetBtn = document.getElementById('resetBtn');
         const toastMsg = document.getElementById('toastMsg');
+
+        let pendingFile = null; // Biến tạm lưu ảnh đang chờ xác nhận
 
         function showToast(text, isError = false) {
             toastMsg.textContent = text;
@@ -223,7 +256,6 @@
             setTimeout(() => { toastMsg.className = 'toast'; }, 3000);
         }
 
-        // TÍNH NĂNG NÉN ẢNH (Thu nhỏ dung lượng giúp Tải Ngầm cực nhanh)
         function compressImage(file, callback) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -232,7 +264,7 @@
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1600; const MAX_HEIGHT = 1600; // Giới hạn kích thước HD
+                    const MAX_WIDTH = 1600; const MAX_HEIGHT = 1600; 
                     let width = img.width; let height = img.height;
 
                     if (width > height) {
@@ -244,27 +276,26 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Nén chất lượng 70% (Base64) - Nhanh gấp 5 lần
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); 
                     callback(compressedDataUrl);
                 }
             }
         }
 
-        // TRƯỜNG HỢP 1: XEM ẢNH (Đã xóa nút Trang chủ, chỉ hiện ảnh)
+        // --- TRƯỜNG HỢP 1: CHẾ ĐỘ XEM ẢNH TỪ LINK CÓ "?id=..." ---
         if (imageId) {
             uploadSection.style.display = 'none';
-            loadingOverlay.innerHTML = '<div class="spinner"></div> Đang mở ảnh...';
             imageWrapper.style.display = 'block';
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.innerHTML = '<div class="spinner"></div> Đang mở ảnh...';
 
             fetch(APPS_SCRIPT_URL + "?id=" + imageId)
             .then(res => res.json())
             .then(data => {
+                loadingOverlay.style.display = 'none';
                 if(data.status === "success" && data.base64Image) {
-                    loadingOverlay.style.display = 'none';
                     imagePreview.src = data.base64Image;
                 } else {
-                    loadingOverlay.style.display = 'none';
                     showToast('Lỗi: Ảnh không tồn tại', true);
                 }
             }).catch(() => {
@@ -273,55 +304,57 @@
             });
         } 
         
-        // TRƯỜNG HỢP 2: TẢI ẢNH LÊN
+        // --- TRƯỜNG HỢP 2: CHẾ ĐỘ TẢI ẢNH LÊN ---
         else {
             const dropZone = document.getElementById('dropZone');
             const fileInput = document.getElementById('fileInput');
 
             dropZone.addEventListener('click', () => fileInput.click());
 
+            // 1. Khi người dùng chọn/chụp ảnh xong
             fileInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) handleUpload(this.files[0]);
+                if (this.files && this.files[0]) {
+                    if (!this.files[0].type.startsWith('image/')) {
+                        showToast('Vui lòng chọn hình ảnh!', true); return;
+                    }
+                    
+                    pendingFile = this.files[0];
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        imagePreview.src = e.target.result; // Hiện preview
+                        uploadSection.style.display = 'none'; // Ẩn nút chụp
+                        imageWrapper.style.display = 'block'; // Hiện khung ảnh
+                        confirmActions.style.display = 'flex'; // HIỆN 2 NÚT XÁC NHẬN
+                    }
+                    reader.readAsDataURL(pendingFile);
+                }
             });
 
-            resetBtn.addEventListener('click', () => {
+            // 2. Nếu bấm "Đổi ảnh khác"
+            cancelBtn.addEventListener('click', () => {
+                pendingFile = null;
                 fileInput.value = '';
                 imagePreview.src = '';
-                uploadSection.style.display = 'block';
+                uploadSection.style.display = 'block'; // Trả lại nút chụp ban đầu
                 imageWrapper.style.display = 'none';
-                resultBox.style.display = 'none';
-                resetBtn.style.display = 'none';
+                confirmActions.style.display = 'none';
             });
 
-            // Copy Link khi chạm vào
-            displayLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                navigator.clipboard.writeText(displayLink.textContent).then(() => {
-                    showToast('Đã copy link chia sẻ!');
-                });
-            });
-
-            function handleUpload(file) {
-                if (!file.type.startsWith('image/')) {
-                    showToast('Vui lòng chỉ chọn hình ảnh!', true); return;
-                }
+            // 3. Nếu bấm "Lưu lên Drive"
+            saveBtn.addEventListener('click', () => {
+                if (!pendingFile) return;
                 
-                uploadSection.style.display = 'none';
-                imageWrapper.style.display = 'block';
-                loadingOverlay.style.display = 'flex';
-
-                // Bắt đầu nén ảnh và tải ngầm
-                compressImage(file, (compressedBase64) => {
-                    imagePreview.src = compressedBase64; // Hiện ảnh ngay lập tức
-                    
-                    // Đẩy ngầm lên server
+                confirmActions.style.display = 'none'; // Ẩn 2 nút đi
+                loadingOverlay.style.display = 'flex'; // Hiện chữ "Đang đồng bộ..."
+                
+                compressImage(pendingFile, (compressedBase64) => {
                     fetch(APPS_SCRIPT_URL, {
                         method: 'POST',
-                        body: JSON.stringify({ fileName: file.name, mimeType: 'image/jpeg', base64: compressedBase64 })
+                        body: JSON.stringify({ fileName: pendingFile.name, mimeType: 'image/jpeg', base64: compressedBase64 })
                     })
                     .then(response => response.json())
                     .then(result => {
-                        loadingOverlay.style.display = 'none'; // Ẩn Loading
+                        loadingOverlay.style.display = 'none'; 
                         if (result.status === "success") {
                             showToast('Lưu đám mây thành công!');
                             displayId.textContent = result.id;
@@ -334,16 +367,31 @@
                             resetBtn.style.display = 'block';
                         } else {
                             showToast('Lỗi: ' + result.message, true);
-                            resetBtn.style.display = 'block';
+                            cancelBtn.click(); // Reset lại nếu lỗi
                         }
                     })
                     .catch(error => {
                         loadingOverlay.style.display = 'none';
                         showToast('Lỗi kết nối mạng!', true);
-                        resetBtn.style.display = 'block';
+                        cancelBtn.click();
                     });
                 });
-            }
+            });
+
+            // Copy Link dễ dàng
+            displayLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigator.clipboard.writeText(displayLink.textContent).then(() => {
+                    showToast('Đã copy link chia sẻ!');
+                });
+            });
+
+            // Reset toàn bộ app sau khi upload xong
+            resetBtn.addEventListener('click', () => {
+                cancelBtn.click(); // Dùng chung logic reset của nút Cancel
+                resultBox.style.display = 'none';
+                resetBtn.style.display = 'none';
+            });
         }
     </script>
 </body>
