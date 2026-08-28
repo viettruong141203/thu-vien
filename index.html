@@ -51,7 +51,6 @@
         h2 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
         p.subtitle { font-size: 13px; color: var(--text-sub); margin-bottom: 28px; }
 
-        /* Vùng tải ảnh */
         #uploadSection { display: block; }
         .drop-zone {
             border: 2px dashed rgba(255, 255, 255, 0.12);
@@ -65,15 +64,16 @@
         .drop-zone-text span { color: var(--primary); font-weight: 600; }
         #fileInput { display: none; }
 
-        /* Vùng xem trước & hiển thị ảnh */
+        /* Vùng hiển thị ảnh: mặc định ẩn */
         .preview-container {
             display: none; margin-top: 15px; border-radius: 16px;
             overflow: hidden; border: 1px solid var(--glass-border);
-            background: rgba(0, 0, 0, 0.4); max-height: 400px; /* Tăng chiều cao để xem ảnh rõ hơn */
-            display: flex; align-items: center; justify-content: center;
+            background: rgba(0, 0, 0, 0.4); max-height: 400px; 
             padding: 10px;
+            align-items: center; justify-content: center;
         }
-        .preview-container img { max-width: 100%; max-height: 380px; object-fit: contain; }
+        
+        .preview-container img { max-width: 100%; max-height: 380px; object-fit: contain; border-radius: 10px; }
 
         .result-box {
             display: none; margin-top: 20px;
@@ -114,7 +114,6 @@
         <h2 id="mainTitle">CloudLens Storage</h2>
         <p class="subtitle" id="subTitle">Chọn ảnh để tự động tải lên Google Drive</p>
 
-        <!-- Form tải lên (Mặc định ẩn nếu đang xem ảnh bằng ID) -->
         <div id="uploadSection">
             <div class="drop-zone" id="dropZone">
                 <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5-5-5 5h3v4h4v-4h3z"/></svg>
@@ -123,12 +122,10 @@
             </div>
         </div>
 
-        <!-- Vùng hiển thị ảnh (Dùng cho cả lúc xem trước & xem bằng ID) -->
         <div class="preview-container" id="previewContainer">
-            <img id="imagePreview" src="" alt="Hiển thị ảnh">
+            <!-- Thẻ img không có src ban đầu, sẽ được tạo bằng JS -->
         </div>
 
-        <!-- Khung kết quả sau upload -->
         <div class="result-box" id="resultBox">
             <div class="result-item">
                 <div class="result-label">ID File </div>
@@ -141,25 +138,21 @@
         </div>
 
         <button type="button" class="action-btn" id="resetBtn">Tải ảnh khác ➕</button>
-        <a href="#" class="action-btn" id="homeBtn" style="display:none;">Trang chủ (Upload)</a>
+        <a href="#" class="action-btn" id="homeBtn">Trang chủ (Upload)</a>
         
         <div class="status-msg" id="statusMsg"></div>
     </div>
 
     <script>
-        // CẬP NHẬT LẠI URL NÀY ĐÚNG VỚI WEB APP BẠN VỪA DEPLOY MỚI NHẤT
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7QlHVDoWr7aQJMzLrfMWaCukXkFisq3A1BdLhyqcbdnPq2JvsJ0xgmkXrCbYBAKMtRQ/exec';
 
-        // Lấy các tham số từ thanh địa chỉ URL
         const urlParams = new URLSearchParams(window.location.search);
         const imageId = urlParams.get('id');
 
-        // Khai báo các phần tử DOM
         const mainTitle = document.getElementById('mainTitle');
         const subTitle = document.getElementById('subTitle');
         const uploadSection = document.getElementById('uploadSection');
         const previewContainer = document.getElementById('previewContainer');
-        const imagePreview = document.getElementById('imagePreview');
         const statusMsg = document.getElementById('statusMsg');
         
         const dropZone = document.getElementById('dropZone');
@@ -170,7 +163,6 @@
         const resetBtn = document.getElementById('resetBtn');
         const homeBtn = document.getElementById('homeBtn');
 
-        // Hàm thông báo
         function showStatus(text, type) {
             statusMsg.textContent = text;
             statusMsg.className = `status-msg ${type}`;
@@ -180,24 +172,27 @@
             statusMsg.style.display = 'none';
         }
 
-        // CHẾ ĐỘ 1: KIỂM TRA NẾU URL CÓ "?id=" THÌ CHẠY HÀM XEM ẢNH
+        // Tạo thẻ img và nhúng ảnh an toàn
+        function renderImage(base64Src) {
+            previewContainer.innerHTML = `<img src="${base64Src}" alt="Ảnh hiển thị">`;
+            previewContainer.style.display = 'flex';
+        }
+
         if (imageId) {
-            uploadSection.style.display = 'none'; // Ẩn form tải lên
+            uploadSection.style.display = 'none';
             mainTitle.textContent = "Xem Ảnh";
             subTitle.textContent = "ID: " + imageId;
             showStatus('Đang tải ảnh từ máy chủ...', 'loading');
 
-            // Gọi GET request tới Apps Script
             fetch(APPS_SCRIPT_URL + "?id=" + imageId)
             .then(res => res.json())
             .then(data => {
-                if(data.status === "success") {
+                if(data.status === "success" && data.base64Image) {
                     hideStatus();
-                    imagePreview.src = data.url;
-                    previewContainer.style.display = 'flex';
-                    homeBtn.style.display = 'block'; // Nút quay về trang tải lên
+                    renderImage(data.base64Image);
+                    homeBtn.style.display = 'block'; 
                 } else {
-                    showStatus(data.message, 'error');
+                    showStatus(data.message || 'Không tải được ảnh', 'error');
                     homeBtn.style.display = 'block';
                 }
             })
@@ -206,14 +201,12 @@
                 homeBtn.style.display = 'block';
             });
             
-            // Xử lý nút Home
             homeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                window.location.href = window.location.pathname; // Tải lại trang bỏ tham số ?id
+                window.location.href = window.location.pathname; 
             });
         } 
         
-        // CHẾ ĐỘ 2: NẾU KHÔNG CÓ "?id=", HIỆN FORM TẢI LÊN BÌNH THƯỜNG
         else {
             dropZone.addEventListener('click', () => fileInput.click());
 
@@ -227,7 +220,7 @@
 
             function resetForm() {
                 fileInput.value = '';
-                imagePreview.src = '';
+                previewContainer.innerHTML = ''; // Xóa sạch nội dung ảnh cũ
                 uploadSection.style.display = 'block';
                 previewContainer.style.display = 'none';
                 resultBox.style.display = 'none';
@@ -243,11 +236,11 @@
                 
                 const reader = new FileReader();
                 reader.onload = e => {
-                    const base64Data = e.target.result;
-                    imagePreview.src = base64Data;
+                    const localBase64Data = e.target.result;
                     
+                    // Hiển thị ảnh ngay lập tức bằng dữ liệu local (không bị lỗi icon)
+                    renderImage(localBase64Data);
                     uploadSection.style.display = 'none';
-                    previewContainer.style.display = 'flex';
                     
                     showStatus('Đang tự động đồng bộ lên Drive...', 'loading');
 
@@ -256,7 +249,7 @@
                         body: JSON.stringify({
                             fileName: file.name,
                             mimeType: file.type,
-                            base64: base64Data
+                            base64: localBase64Data
                         })
                     })
                     .then(response => response.json())
@@ -266,10 +259,8 @@
                             
                             displayId.textContent = result.id;
                             
-                            // Tạo link chia sẻ rút gọn (link trang web của bạn + tham số ID)
-                            const currentUrl = window.location.href.split('?')[0]; // Lấy link gốc bỏ tham số cũ đi
+                            const currentUrl = window.location.href.split('?')[0]; 
                             const shareUrl = currentUrl + "?id=" + result.id;
-                            
                             displayLink.innerHTML = `<a href="${shareUrl}" target="_blank" style="color:white; word-break:break-all;">${shareUrl}</a>`;
                             
                             resultBox.style.display = 'block';
@@ -281,7 +272,6 @@
                     })
                     .catch(error => {
                         showStatus('Lỗi kết nối mạng, vui lòng thử lại!', 'error');
-                        console.error(error);
                         resetBtn.style.display = 'block';
                     });
                 }
