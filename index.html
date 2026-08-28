@@ -2,280 +2,347 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CloudLens - Kho Ảnh Thông Minh</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CloudLens - Kho Ảnh Đám Mây</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-gradient: radial-gradient(circle at top left, #1e1b4b, #09090b);
-            --primary: #6366f1;
-            --accent: #a855f7;
-            --glass-bg: rgba(24, 24, 27, 0.75);
+            --bg: #050505;
+            --primary: #8b5cf6;
+            --secondary: #3b82f6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
             --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
             --text-sub: #a1a1aa;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
 
         body {
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: var(--bg-gradient);
-            color: #ffffff;
+            background-color: var(--bg);
+            color: var(--text-main);
             padding: 20px;
+            overflow-x: hidden;
+            position: relative;
         }
 
-        .upload-card {
+        /* Nền Aurora chuyển động cực đẹp */
+        .aurora-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            overflow: hidden; z-index: -1;
+            background: #000;
+        }
+        .aurora-bg .orb {
+            position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+        .orb-1 { width: 300px; height: 300px; background: var(--primary); top: -50px; left: -50px; }
+        .orb-2 { width: 400px; height: 400px; background: var(--secondary); bottom: -100px; right: -100px; animation-delay: -5s; }
+
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(50px, 50px) scale(1.2); } }
+
+        /* Card chứa nội dung */
+        .glass-card {
             background: var(--glass-bg);
-            backdrop-filter: blur(24px);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
             border: 1px solid var(--glass-border);
-            border-radius: 28px;
-            padding: 35px 30px;
+            border-radius: 32px;
+            padding: 40px 30px;
             width: 100%;
-            max-width: 440px;
+            max-width: 420px;
             text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+            position: relative;
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .logo-badge {
-            width: 50px; height: 50px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 16px;
-            display: flex; justify-content: center; align-items: center;
-            margin: 0 auto 20px;
-        }
-        .logo-badge svg { width: 24px; height: 24px; fill: white; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        h2 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
-        p.subtitle { font-size: 13px; color: var(--text-sub); margin-bottom: 28px; }
+        .logo { margin-bottom: 20px; }
+        .logo svg { width: 48px; height: 48px; fill: url(#grad); filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5)); }
 
-        #uploadSection { display: block; }
+        h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+        p.subtitle { font-size: 14px; color: var(--text-sub); margin-bottom: 30px; font-weight: 300; }
+
+        /* Vùng Upload */
         .drop-zone {
-            border: 2px dashed rgba(255, 255, 255, 0.12);
-            border-radius: 20px; padding: 35px 20px;
-            cursor: pointer; transition: all 0.3s;
-            background: rgba(255, 255, 255, 0.02);
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 24px; padding: 40px 20px;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(255, 255, 255, 0.01);
+            position: relative; overflow: hidden;
         }
-        .drop-zone:hover { border-color: var(--primary); background: rgba(99, 102, 241, 0.04); }
-        .drop-zone svg { width: 40px; height: 40px; fill: #a1a1aa; margin-bottom: 12px; }
-        .drop-zone-text { font-size: 14px; color: #d4d4d8; font-weight: 500; }
-        .drop-zone-text span { color: var(--primary); font-weight: 600; }
+        .drop-zone:hover { border-color: var(--primary); background: rgba(139, 92, 246, 0.05); transform: translateY(-3px); }
+        .drop-zone-icon { font-size: 40px; margin-bottom: 15px; display: block; opacity: 0.8; }
+        .drop-zone-text { font-size: 15px; color: #d4d4d8; font-weight: 400; }
+        .drop-zone-text span { color: #a78bfa; font-weight: 600; }
         #fileInput { display: none; }
 
-        /* Vùng hiển thị ảnh: mặc định ẩn */
-        .preview-container {
-            display: none; margin-top: 15px; border-radius: 16px;
-            overflow: hidden; border: 1px solid var(--glass-border);
-            background: rgba(0, 0, 0, 0.4); max-height: 400px; 
-            padding: 10px;
-            align-items: center; justify-content: center;
+        /* Vùng hiển thị ảnh mượt mà */
+        .image-wrapper {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            display: none;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border: 1px solid var(--glass-border);
+            background: #000;
         }
-        
-        .preview-container img { max-width: 100%; max-height: 380px; object-fit: contain; border-radius: 10px; }
+        .image-wrapper img {
+            width: 100%;
+            height: auto;
+            max-height: 450px;
+            object-fit: contain;
+            display: block;
+            border-radius: 20px;
+        }
 
+        /* Loading Spinner chạy ngầm */
+        .loading-overlay {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+            padding: 8px 12px; border-radius: 20px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Hộp kết quả gọn gàng */
         .result-box {
-            display: none; margin-top: 20px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 16px; padding: 15px; text-align: left;
+            display: none; margin-top: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px; padding: 20px; text-align: left;
+            animation: fadeIn 0.5s ease;
         }
-        .result-item { margin-bottom: 12px; }
-        .result-item:last-child { margin-bottom: 0; }
-        .result-label { font-size: 12px; color: #34d399; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
-        .result-value { 
-            font-size: 15px; font-weight: 700; color: white; 
-            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
-            word-break: break-all;
+        .result-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .result-row:last-child { margin-bottom: 0; }
+        .label { font-size: 12px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .value { font-size: 16px; font-weight: 700; color: #fff; }
+        .link-value { font-size: 14px; font-weight: 400; color: #a78bfa; word-break: break-all; text-decoration: none; }
+        
+        .reset-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%; padding: 16px; border-radius: 18px; font-size: 16px; font-weight: 600; color: #fff;
+            cursor: pointer; margin-top: 20px; display: none; transition: all 0.3s;
         }
+        .reset-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
 
-        .action-btn {
-            background: rgba(255, 255, 255, 0.08); color: #f4f4f5;
-            border: 1px solid var(--glass-border); width: 100%;
-            padding: 14px 0; border-radius: 14px; font-size: 15px; font-weight: 600;
-            cursor: pointer; margin-top: 20px; display: none;
-            text-decoration: none; text-align: center;
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399; padding: 12px 24px; border-radius: 100px; font-size: 14px; font-weight: 500;
+            backdrop-filter: blur(10px); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
         }
-        .action-btn:hover { background: rgba(255, 255, 255, 0.15); }
-
-        .status-msg { margin-top: 16px; font-size: 13px; padding: 12px; border-radius: 12px; display: none; }
-        .status-msg.loading { display: block; background: rgba(234, 179, 8, 0.12); color: #facc15; }
-        .status-msg.error { display: block; background: rgba(239, 68, 68, 0.12); color: #f87171; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.error { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
     </style>
 </head>
 <body>
 
-    <div class="upload-card">
-        <div class="logo-badge">
-            <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
-        </div>
+    <div class="aurora-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
 
-        <h2 id="mainTitle">CloudLens Storage</h2>
-        <p class="subtitle" id="subTitle">Chọn ảnh để tự động tải lên Google Drive</p>
+    <!-- SVG Gradient Def -->
+    <svg width="0" height="0">
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+        </linearGradient>
+    </svg>
 
+    <div class="glass-card">
+        
         <div id="uploadSection">
-            <div class="drop-zone" id="dropZone">
+            <div class="logo">
                 <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5-5-5 5h3v4h4v-4h3z"/></svg>
-                <div class="drop-zone-text">Kéo thả ảnh vào đây hoặc <span>chọn file</span></div>
+            </div>
+            <h2>CloudLens</h2>
+            <p class="subtitle">Tự động nén và tải ảnh lên Google Drive</p>
+
+            <div class="drop-zone" id="dropZone">
+                <span class="drop-zone-icon">📸</span>
+                <div class="drop-zone-text">Chạm để chọn hoặc <span>chụp ảnh</span></div>
                 <input type="file" id="fileInput" accept="image/*">
             </div>
         </div>
 
-        <div class="preview-container" id="previewContainer">
-            <!-- Thẻ img không có src ban đầu, sẽ được tạo bằng JS -->
+        <div class="image-wrapper" id="imageWrapper">
+            <img id="imagePreview" src="" alt="View">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="spinner"></div> Đang đồng bộ...
+            </div>
         </div>
 
         <div class="result-box" id="resultBox">
-            <div class="result-item">
-                <div class="result-label">ID File </div>
-                <div class="result-value" id="displayId">...</div>
+            <div class="result-row">
+                <div class="label">ID Bảo mật</div>
+                <div class="value" id="displayId">...</div>
             </div>
-            <div class="result-item">
-                <div class="result-label">Link chia sẻ rút gọn</div>
-                <div class="result-value" style="font-weight:400; font-size:13px;" id="displayLink">...</div>
+            <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 15px 0;"></div>
+            <div class="result-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                <div class="label">Link chia sẻ (Nhấn để copy)</div>
+                <a href="#" class="link-value" id="displayLink">...</a>
             </div>
         </div>
 
-        <button type="button" class="action-btn" id="resetBtn">Tải ảnh khác ➕</button>
-        <a href="#" class="action-btn" id="homeBtn">Trang chủ (Upload)</a>
-        
-        <div class="status-msg" id="statusMsg"></div>
+        <button type="button" class="reset-btn" id="resetBtn">Tải ảnh khác</button>
     </div>
+
+    <div class="toast" id="toastMsg">Thành công!</div>
 
     <script>
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7QlHVDoWr7aQJMzLrfMWaCukXkFisq3A1BdLhyqcbdnPq2JvsJ0xgmkXrCbYBAKMtRQ/exec';
-
+        
         const urlParams = new URLSearchParams(window.location.search);
         const imageId = urlParams.get('id');
 
-        const mainTitle = document.getElementById('mainTitle');
-        const subTitle = document.getElementById('subTitle');
         const uploadSection = document.getElementById('uploadSection');
-        const previewContainer = document.getElementById('previewContainer');
-        const statusMsg = document.getElementById('statusMsg');
-        
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
+        const imageWrapper = document.getElementById('imageWrapper');
+        const imagePreview = document.getElementById('imagePreview');
+        const loadingOverlay = document.getElementById('loadingOverlay');
         const resultBox = document.getElementById('resultBox');
         const displayId = document.getElementById('displayId');
         const displayLink = document.getElementById('displayLink');
         const resetBtn = document.getElementById('resetBtn');
-        const homeBtn = document.getElementById('homeBtn');
+        const toastMsg = document.getElementById('toastMsg');
 
-        function showStatus(text, type) {
-            statusMsg.textContent = text;
-            statusMsg.className = `status-msg ${type}`;
-        }
-        function hideStatus() {
-            statusMsg.className = 'status-msg';
-            statusMsg.style.display = 'none';
+        function showToast(text, isError = false) {
+            toastMsg.textContent = text;
+            toastMsg.className = isError ? 'toast show error' : 'toast show';
+            setTimeout(() => { toastMsg.className = 'toast'; }, 3000);
         }
 
-        // Tạo thẻ img và nhúng ảnh an toàn
-        function renderImage(base64Src) {
-            previewContainer.innerHTML = `<img src="${base64Src}" alt="Ảnh hiển thị">`;
-            previewContainer.style.display = 'flex';
+        // TÍNH NĂNG NÉN ẢNH (Thu nhỏ dung lượng giúp Tải Ngầm cực nhanh)
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1600; const MAX_HEIGHT = 1600; // Giới hạn kích thước HD
+                    let width = img.width; let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Nén chất lượng 70% (Base64) - Nhanh gấp 5 lần
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); 
+                    callback(compressedDataUrl);
+                }
+            }
         }
 
+        // TRƯỜNG HỢP 1: XEM ẢNH (Đã xóa nút Trang chủ, chỉ hiện ảnh)
         if (imageId) {
             uploadSection.style.display = 'none';
-            mainTitle.textContent = "Xem Ảnh";
-            subTitle.textContent = "ID: " + imageId;
-            showStatus('Đang tải ảnh từ máy chủ...', 'loading');
+            loadingOverlay.innerHTML = '<div class="spinner"></div> Đang mở ảnh...';
+            imageWrapper.style.display = 'block';
 
             fetch(APPS_SCRIPT_URL + "?id=" + imageId)
             .then(res => res.json())
             .then(data => {
                 if(data.status === "success" && data.base64Image) {
-                    hideStatus();
-                    renderImage(data.base64Image);
-                    homeBtn.style.display = 'block'; 
+                    loadingOverlay.style.display = 'none';
+                    imagePreview.src = data.base64Image;
                 } else {
-                    showStatus(data.message || 'Không tải được ảnh', 'error');
-                    homeBtn.style.display = 'block';
+                    loadingOverlay.style.display = 'none';
+                    showToast('Lỗi: Ảnh không tồn tại', true);
                 }
-            })
-            .catch(err => {
-                showStatus('Lỗi mạng khi tải ảnh!', 'error');
-                homeBtn.style.display = 'block';
-            });
-            
-            homeBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.location.href = window.location.pathname; 
+            }).catch(() => {
+                loadingOverlay.style.display = 'none';
+                showToast('Lỗi mạng khi tải ảnh', true);
             });
         } 
         
+        // TRƯỜNG HỢP 2: TẢI ẢNH LÊN
         else {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+
             dropZone.addEventListener('click', () => fileInput.click());
 
             fileInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    handleAndUploadFile(this.files[0]);
-                }
+                if (this.files && this.files[0]) handleUpload(this.files[0]);
             });
 
-            resetBtn.addEventListener('click', resetForm);
-
-            function resetForm() {
+            resetBtn.addEventListener('click', () => {
                 fileInput.value = '';
-                previewContainer.innerHTML = ''; // Xóa sạch nội dung ảnh cũ
+                imagePreview.src = '';
                 uploadSection.style.display = 'block';
-                previewContainer.style.display = 'none';
+                imageWrapper.style.display = 'none';
                 resultBox.style.display = 'none';
                 resetBtn.style.display = 'none';
-                hideStatus();
-            }
+            });
 
-            function handleAndUploadFile(file) {
+            // Copy Link khi chạm vào
+            displayLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigator.clipboard.writeText(displayLink.textContent).then(() => {
+                    showToast('Đã copy link chia sẻ!');
+                });
+            });
+
+            function handleUpload(file) {
                 if (!file.type.startsWith('image/')) {
-                    showStatus('Vui lòng chỉ chọn tệp hình ảnh!', 'error');
-                    return;
+                    showToast('Vui lòng chỉ chọn hình ảnh!', true); return;
                 }
                 
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const localBase64Data = e.target.result;
-                    
-                    // Hiển thị ảnh ngay lập tức bằng dữ liệu local (không bị lỗi icon)
-                    renderImage(localBase64Data);
-                    uploadSection.style.display = 'none';
-                    
-                    showStatus('Đang tự động đồng bộ lên Drive...', 'loading');
+                uploadSection.style.display = 'none';
+                imageWrapper.style.display = 'block';
+                loadingOverlay.style.display = 'flex';
 
+                // Bắt đầu nén ảnh và tải ngầm
+                compressImage(file, (compressedBase64) => {
+                    imagePreview.src = compressedBase64; // Hiện ảnh ngay lập tức
+                    
+                    // Đẩy ngầm lên server
                     fetch(APPS_SCRIPT_URL, {
                         method: 'POST',
-                        body: JSON.stringify({
-                            fileName: file.name,
-                            mimeType: file.type,
-                            base64: localBase64Data
-                        })
+                        body: JSON.stringify({ fileName: file.name, mimeType: 'image/jpeg', base64: compressedBase64 })
                     })
                     .then(response => response.json())
                     .then(result => {
+                        loadingOverlay.style.display = 'none'; // Ẩn Loading
                         if (result.status === "success") {
-                            hideStatus(); 
-                            
+                            showToast('Lưu đám mây thành công!');
                             displayId.textContent = result.id;
                             
-                            const currentUrl = window.location.href.split('?')[0]; 
-                            const shareUrl = currentUrl + "?id=" + result.id;
-                            displayLink.innerHTML = `<a href="${shareUrl}" target="_blank" style="color:white; word-break:break-all;">${shareUrl}</a>`;
+                            const shareUrl = window.location.href.split('?')[0] + "?id=" + result.id;
+                            displayLink.textContent = shareUrl;
+                            displayLink.href = shareUrl;
                             
                             resultBox.style.display = 'block';
                             resetBtn.style.display = 'block';
                         } else {
-                            showStatus('Lỗi: ' + result.message, 'error');
+                            showToast('Lỗi: ' + result.message, true);
                             resetBtn.style.display = 'block';
                         }
                     })
                     .catch(error => {
-                        showStatus('Lỗi kết nối mạng, vui lòng thử lại!', 'error');
+                        loadingOverlay.style.display = 'none';
+                        showToast('Lỗi kết nối mạng!', true);
                         resetBtn.style.display = 'block';
                     });
-                }
-                reader.readAsDataURL(file);
+                });
             }
         }
     </script>
