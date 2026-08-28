@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudLens - Tự Động Lưu Ảnh</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at top left, #1e1b4b, #09090b);
+            --primary: #6366f1;
+            --accent: #a855f7;
+            --glass-bg: rgba(24, 24, 27, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-sub: #a1a1aa;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-gradient);
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .upload-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 35px 30px;
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        .logo-badge {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 16px;
+            display: flex; justify-content: center; align-items: center;
+            margin: 0 auto 20px;
+        }
+        .logo-badge svg { width: 24px; height: 24px; fill: white; }
+
+        h2 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+        p.subtitle { font-size: 13px; color: var(--text-sub); margin-bottom: 28px; }
+
+        .drop-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 20px; padding: 35px 20px;
+            cursor: pointer; transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .drop-zone:hover { border-color: var(--primary); background: rgba(99, 102, 241, 0.04); }
+        .drop-zone svg { width: 40px; height: 40px; fill: #a1a1aa; margin-bottom: 12px; }
+        .drop-zone-text { font-size: 14px; color: #d4d4d8; font-weight: 500; }
+        .drop-zone-text span { color: var(--primary); font-weight: 600; }
+
+        #fileInput { display: none; }
+
+        .preview-container {
+            display: none; margin-top: 15px; border-radius: 16px;
+            overflow: hidden; border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.4); max-height: 320px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .preview-container img { max-width: 100%; max-height: 300px; object-fit: contain; }
+
+        /* Khu vực hiển thị ID và Link sau khi upload */
+        .result-box {
+            display: none;
+            margin-top: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 15px;
+            text-align: left;
+        }
+        .result-item { margin-bottom: 12px; }
+        .result-item:last-child { margin-bottom: 0; }
+        .result-label { font-size: 12px; color: #34d399; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
+        .result-value { 
+            font-size: 15px; font-weight: 700; color: white; 
+            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
+            word-break: break-all;
+        }
+
+        .reset-btn {
+            background: rgba(255, 255, 255, 0.08); color: #f4f4f5;
+            border: 1px solid var(--glass-border); width: 100%;
+            padding: 14px 0; border-radius: 14px; font-size: 15px; font-weight: 600;
+            cursor: pointer; margin-top: 20px; display: none;
+        }
+        .reset-btn:hover { background: rgba(255, 255, 255, 0.15); }
+
+        .status-msg { margin-top: 16px; font-size: 13px; padding: 12px; border-radius: 12px; display: none; }
+        .status-msg.loading { display: block; background: rgba(234, 179, 8, 0.12); color: #facc15; }
+        .status-msg.error { display: block; background: rgba(239, 68, 68, 0.12); color: #f87171; }
+    </style>
+</head>
+<body>
+
+    <div class="upload-card">
+        <div class="logo-badge">
+            <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+        </div>
+
+        <h2>CloudLens Storage</h2>
+        <p class="subtitle">Chọn ảnh để tự động tải lên Google Drive</p>
+
+        <div class="drop-zone" id="dropZone">
+            <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5-5-5 5h3v4h4v-4h3z"/></svg>
+            <div class="drop-zone-text">Kéo thả ảnh vào đây hoặc <span>chọn file</span></div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="preview-container" id="previewContainer" style="display: none;">
+            <img id="imagePreview" src="" alt="Preview">
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <div class="result-item">
+                <div class="result-label">ID File (Không trùng)</div>
+                <div class="result-value" id="displayId">...</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Link nhúng HTML (Direct Link)</div>
+                <div class="result-value" style="font-weight:400; font-size:13px;" id="displayLink">...</div>
+            </div>
+        </div>
+
+        <button type="button" class="reset-btn" id="resetBtn">Tải ảnh khác ➕</button>
+        <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <script>
+        // Đã cập nhật link API mới của bạn tại đây
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7QlHVDoWr7aQJMzLrfMWaCukXkFisq3A1BdLhyqcbdnPq2JvsJ0xgmkXrCbYBAKMtRQ/exec';
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusMsg = document.getElementById('statusMsg');
+        
+        const resultBox = document.getElementById('resultBox');
+        const displayId = document.getElementById('displayId');
+        const displayLink = document.getElementById('displayLink');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                handleAndUploadFile(this.files[0]);
+            }
+        });
+
+        resetBtn.addEventListener('click', resetForm);
+
+        function resetForm() {
+            fileInput.value = '';
+            imagePreview.src = '';
+            dropZone.style.display = 'block';
+            previewContainer.style.display = 'none';
+            resultBox.style.display = 'none';
+            resetBtn.style.display = 'none';
+            hideStatus();
+        }
+
+        function showStatus(text, type) {
+            statusMsg.textContent = text;
+            statusMsg.className = `status-msg ${type}`;
+        }
+
+        function hideStatus() {
+            statusMsg.className = 'status-msg';
+            statusMsg.style.display = 'none';
+        }
+
+        function handleAndUploadFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showStatus('Vui lòng chỉ chọn tệp hình ảnh!', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = e => {
+                const base64Data = e.target.result;
+                imagePreview.src = base64Data;
+                
+                dropZone.style.display = 'none';
+                previewContainer.style.display = 'flex';
+                
+                showStatus('Đang tự động đồng bộ lên Drive...', 'loading');
+
+                fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        mimeType: file.type,
+                        base64: base64Data
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === "success") {
+                        hideStatus(); // Ẩn thông báo loading
+                        
+                        // Hiển thị khung kết quả
+                        displayId.textContent = result.id;
+                        displayLink.textContent = result.url;
+                        resultBox.style.display = 'block';
+                        
+                        resetBtn.style.display = 'block';
+                    } else {
+                        showStatus('Lỗi: ' + result.message, 'error');
+                        resetBtn.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    showStatus('Lỗi kết nối mạng, vui lòng thử lại!', 'error');
+                    console.error(error);
+                    resetBtn.style.display = 'block';
+                });
+            }
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+  </html>
+  
