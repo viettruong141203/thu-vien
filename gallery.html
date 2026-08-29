@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CloudLens - Thư Viện</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #050505; --primary: #8b5cf6; --secondary: #3b82f6; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); --text-main: #ffffff; --text-sub: #a1a1aa; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; background-color: var(--bg); color: var(--text-main); padding: 80px 20px 40px; overflow-x: hidden; position: relative; }
+
+        .aurora-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; z-index: -1; background: #000; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5; animation: float 10s infinite ease-in-out alternate; }
+        .orb-1 { width: 300px; height: 300px; background: var(--primary); top: -50px; left: -50px; }
+        .orb-2 { width: 400px; height: 400px; background: var(--secondary); bottom: -100px; right: -100px; animation-delay: -5s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(50px, 50px) scale(1.2); } }
+
+        /* MENU ĐIỀU HƯỚNG */
+        .tab-menu { position: fixed; top: 20px; z-index: 10; display: flex; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 100px; padding: 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .tab-btn { padding: 10px 24px; border-radius: 100px; font-size: 15px; font-weight: 600; color: var(--text-sub); cursor: pointer; transition: 0.3s; text-decoration: none; }
+        .tab-btn.active { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
+
+        /* THƯ VIỆN ẢNH */
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: 32px; padding: 40px 30px; width: 100%; max-width: 800px; text-align: center; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6); animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        p.subtitle { font-size: 14px; color: var(--text-sub); margin-bottom: 30px; font-weight: 300; }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-top: 20px; }
+        .gallery-item { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 1/1; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; background: rgba(0,0,0,0.3); }
+        .gallery-item:hover { transform: scale(1.05); border-color: var(--primary); box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4); z-index: 2;}
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+        .gallery-empty { grid-column: 1 / -1; color: var(--text-sub); padding: 40px 0; font-size: 15px; }
+
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="aurora-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
+
+    <!-- MENU LIÊN KẾT -->
+    <div class="tab-menu">
+        <a href="index.html" class="tab-btn">📸 Tải lên</a>
+        <a href="gallery.html" class="tab-btn active">🖼️ Thư viện</a>
+    </div>
+
+    <!-- MÀN HÌNH THƯ VIỆN -->
+    <div class="glass-card">
+        <h2>Thư viện của bạn</h2>
+        <p class="subtitle">Tất cả ảnh đã lưu trên hệ thống</p>
+        
+        <div id="galleryLoading" style="color: #a1a1aa; margin: 40px 0;">
+            <div class="spinner"></div> Đang tải dữ liệu...
+        </div>
+        <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7QlHVDoWr7aQJMzLrfMWaCukXkFisq3A1BdLhyqcbdnPq2JvsJ0xgmkXrCbYBAKMtRQ/exec';
+        
+        // Tự động tải dữ liệu khi mở trang
+        document.addEventListener("DOMContentLoaded", () => {
+            const grid = document.getElementById('galleryGrid');
+            const loading = document.getElementById('galleryLoading');
+
+            fetch(APPS_SCRIPT_URL + "?action=gallery")
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+                if(data.status === "success") {
+                    if(data.data.length === 0) {
+                        grid.innerHTML = '<div class="gallery-empty">Chưa có ảnh nào được tải lên</div>';
+                        return;
+                    }
+                    
+                    // Lấy link trang web hiện tại (Bỏ chữ gallery.html đi) để ráp với view.html
+                    const baseUrl = window.location.href.replace(/gallery\.html.*/, '').replace(/\/$/, '');
+                    
+                    data.data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'gallery-item';
+                        // Dùng referrerpolicy="no-referrer" để ảnh Thumbnail của Google Drive không bị lỗi 403 Forbidden
+                        div.innerHTML = `<img src="${item.thumb}" loading="lazy" referrerpolicy="no-referrer">`;
+                        
+                        // Click mở tab xem chi tiết (view.html)
+                        div.onclick = () => {
+                            window.location.href = baseUrl + "/view.html?id=" + item.id;
+                        };
+                        grid.appendChild(div);
+                    });
+                } else {
+                    grid.innerHTML = '<div class="gallery-empty">Lỗi tải dữ liệu</div>';
+                }
+            }).catch(() => {
+                loading.style.display = 'none';
+                grid.innerHTML = '<div class="gallery-empty">Lỗi kết nối mạng, vui lòng tải lại trang.</div>';
+            });
+        });
+    </script>
+</body>
+</html>
