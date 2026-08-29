@@ -21,7 +21,6 @@
         h2 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
         p.subtitle { font-size: 14px; color: var(--text-sub); margin-bottom: 25px; }
 
-        /* HAI NÚT CHỌN ẢNH VÀ CHỤP ẢNH */
         .upload-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
         .option-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 25px 10px; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
         .option-card:hover { background: rgba(139, 92, 246, 0.1); border-color: var(--primary); transform: translateY(-3px); }
@@ -49,9 +48,6 @@
         .link-value { font-size: 14px; color: #a78bfa; word-break: break-all; text-decoration: none; }
         .reset-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; padding: 16px; border-radius: 18px; font-size: 16px; font-weight: 600; color: #fff; cursor: pointer; margin-top: 20px; display: none; }
         
-        .nav-btn { display: inline-block; margin-top: 25px; padding: 12px 24px; border-radius: 14px; font-size: 14px; font-weight: 500; color: var(--text-sub); background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); text-decoration: none; transition: 0.3s; }
-        .nav-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-
         .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; padding: 12px 24px; border-radius: 100px; font-size: 14px; font-weight: 500; backdrop-filter: blur(10px); transition: 0.4s; z-index: 1000; }
         .toast.show { transform: translateX(-50%) translateY(0); }
         .toast.error { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
@@ -67,7 +63,6 @@
             <h2>CloudLens</h2>
             <p class="subtitle">Bảo mật - Nhanh chóng - Tiện lợi</p>
 
-            <!-- 2 Nút Chọn hoặc Chụp ảnh riêng biệt -->
             <div class="upload-options">
                 <div class="option-card" id="btnCamera">
                     <span class="opt-icon">📸</span>
@@ -79,7 +74,6 @@
                 </div>
             </div>
             
-            <!-- 2 Input tương ứng ẩn phía sau -->
             <input type="file" id="fileCamera" accept="image/*" capture="environment">
             <input type="file" id="fileGallery" accept="image/*">
         </div>
@@ -104,9 +98,6 @@
         </div>
         <button type="button" class="reset-btn" id="resetBtn">Tải ảnh mới ➕</button>
     </div>
-
-    <!-- Nút đi tới Thư viện ảnh -->
-    <a href="gallery.html" class="nav-btn">🖼️ Đi tới Thư viện ảnh</a>
 
     <div class="toast" id="toastMsg">Thành công!</div>
 
@@ -149,7 +140,6 @@
             }
         }
 
-        // Logic gắn sự kiện cho 2 nút bấm
         const btnCamera = document.getElementById('btnCamera');
         const btnGallery = document.getElementById('btnGallery');
         const fileCamera = document.getElementById('fileCamera');
@@ -158,7 +148,6 @@
         btnCamera.addEventListener('click', () => fileCamera.click());
         btnGallery.addEventListener('click', () => fileGallery.click());
 
-        // Xử lý chung khi file được chọn từ 1 trong 2 input
         function handleFileSelect(e) {
             if (this.files && this.files[0]) {
                 pendingFile = this.files[0];
