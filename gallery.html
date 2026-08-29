@@ -53,31 +53,69 @@
         
         const galleryGrid = document.getElementById('galleryGrid');
         const galleryLoader = document.getElementById('galleryLoader');
+        
+        let currentData = []; // Lưu trữ dữ liệu hiện tại để so sánh
 
-        // Lấy dữ liệu thư viện từ Apps Script
-        fetch(APPS_SCRIPT_URL + "?action=gallery")
-        .then(res => res.json())
-        .then(result => {
-            galleryLoader.style.display = 'none';
-            if(result.status === 'success') {
-                if(result.data.length === 0) {
-                    galleryGrid.innerHTML = '<p style="grid-column: 1/-1; color:#a1a1aa; padding: 20px 0;">Chưa có ảnh nào được tải lên.</p>';
-                    return;
-                }
-                const baseUrl = window.location.href.replace(/gallery\.html.*/, '').replace(/\/$/, '');
-                
-                result.data.forEach(img => {
-                    const a = document.createElement('a');
-                    a.className = 'gallery-item';
-                    a.href = baseUrl + "/view.html?id=" + img.id;
-                    a.innerHTML = `<img src="${img.thumb}" loading="lazy" alt="ID"><div class="gallery-id">${img.id}</div>`;
-                    galleryGrid.appendChild(a);
-                });
+        function renderGallery(data) {
+            if(data.length === 0) {
+                galleryGrid.innerHTML = '<p style="grid-column: 1/-1; color:#a1a1aa; padding: 20px 0;">Chưa có ảnh nào được tải lên.</p>';
+                return;
             }
-        }).catch(() => {
-            galleryLoader.style.display = 'none';
-            galleryGrid.innerHTML = '<p style="grid-column: 1/-1; color:#f87171;">Lỗi tải dữ liệu mạng!</p>';
-        });
+            
+            const baseUrl = window.location.href.replace(/gallery\.html.*/, '').replace(/\/$/, '');
+            let htmlContent = '';
+            
+            data.forEach(img => {
+                htmlContent += `
+                    <a class="gallery-item" href="${baseUrl}/view.html?id=${img.id}">
+                        <img src="${img.thumb}" loading="lazy" alt="${img.id}">
+                        <div class="gallery-id">${img.id}</div>
+                    </a>
+                `;
+            });
+            
+            galleryGrid.innerHTML = htmlContent;
+        }
+
+        // Hàm fetch dữ liệu (có cờ isFirstLoad để biết là tải lần đầu hay tải ngầm)
+        function fetchGalleryData(isFirstLoad = false) {
+            fetch(APPS_SCRIPT_URL + "?action=gallery")
+            .then(res => res.json())
+            .then(result => {
+                if (isFirstLoad) galleryLoader.style.display = 'none';
+                
+                if (result.status === 'success') {
+                    const newData = result.data;
+                    
+                    // Kiểm tra xem có ảnh mới không (so sánh số lượng hoặc ID của ảnh đầu tiên)
+                    let hasChanges = false;
+                    if (newData.length !== currentData.length) {
+                        hasChanges = true;
+                    } else if (newData.length > 0 && currentData.length > 0 && newData[0].id !== currentData[0].id) {
+                        hasChanges = true;
+                    }
+                    
+                    // Chỉ cập nhật lại màn hình (Render) nếu phát hiện có sự thay đổi
+                    if (hasChanges || isFirstLoad) {
+                        currentData = newData;
+                        renderGallery(currentData);
+                    }
+                }
+            }).catch(() => {
+                if (isFirstLoad) {
+                    galleryLoader.style.display = 'none';
+                    galleryGrid.innerHTML = '<p style="grid-column: 1/-1; color:#f87171;">Lỗi tải dữ liệu mạng!</p>';
+                }
+            });
+        }
+
+        // 1. Chạy lần đầu tiên khi vừa mở trang (Có hiện hiệu ứng quay quay)
+        fetchGalleryData(true);
+
+        // 2. Chạy ngầm tự động làm mới mỗi 2 giây (Không làm gián đoạn màn hình)
+        setInterval(() => {
+            fetchGalleryData(false);
+        }, 2000); // 2000 ms = 2 giây
     </script>
 </body>
 </html>
