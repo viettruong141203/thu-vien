@@ -2,110 +2,149 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>CloudLens - Xem Ảnh</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg: #030303; 
-            --primary: #8b5cf6; 
-            --secondary: #3b82f6; 
+            --bg-color: #050505;
+            --accent-1: #8b5cf6;
+            --accent-2: #3b82f6;
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        body { 
-            min-height: 100vh; display: flex; justify-content: center; align-items: center; 
-            background: var(--bg); color: #fff; padding: 0; margin: 0; overflow: hidden; 
+        body, html { 
+            width: 100%; 
+            /* Sử dụng 100dvh giúp tự động tương thích với thanh địa chỉ của mọi trình duyệt mobile */
+            height: 100vh; height: 100dvh; 
+            background: var(--bg-color); 
+            color: #fff; 
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
         }
         
-        /* Nền Aurora mượt mà hơn, tối hơn để tôn bức ảnh */
-        .aurora-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: radial-gradient(circle at center, #111 0%, #000 100%); overflow: hidden; }
-        .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.35; animation: float 12s infinite ease-in-out alternate; }
-        .orb-1 { width: 40vw; height: 40vw; background: var(--primary); top: -10%; left: -10%; }
-        .orb-2 { width: 50vw; height: 50vw; background: var(--secondary); bottom: -20%; right: -10%; animation-delay: -6s; }
-        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 50px) scale(1.1); } }
+        /* Nền Aurora siêu thực, làm nền tối hơn để tôn bức ảnh */
+        .ambient-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at center, #151515 0%, #000000 100%);
+        }
+        .ambient-glow {
+            position: absolute; border-radius: 50%; filter: blur(150px); opacity: 0.25;
+            animation: pulse-glow 10s infinite alternate ease-in-out;
+        }
+        .glow-left { width: 50vw; height: 50vw; background: var(--accent-1); top: -20%; left: -20%; }
+        .glow-right { width: 60vw; height: 60vw; background: var(--accent-2); bottom: -30%; right: -20%; animation-delay: -5s; }
+        @keyframes pulse-glow { 0% { transform: scale(0.8) translate(0, 0); } 100% { transform: scale(1.1) translate(20px, 40px); } }
 
-        /* Container hiển thị ảnh Full màn hình */
-        .viewer-container {
-            width: 100vw;
-            height: 100vh;
+        /* Container Căn giữa tuyệt đối */
+        .viewer-box {
+            position: relative;
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 15px; /* Khoảng cách lề rất nhỏ để ảnh to hết cỡ */
-            position: relative;
+            padding: 20px; /* Tạo khoảng trống an toàn viền màn hình */
         }
 
-        /* Bức ảnh được thiết kế kiểu Cinematic (Trôi nổi) */
-        #imageDisplay { 
-            max-width: 100%; 
-            max-height: 100%; 
-            object-fit: contain; 
-            border-radius: 12px; /* Bo góc nhẹ thanh lịch */
-            box-shadow: 0 40px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.1); /* Viền kính siêu mỏng 1px tự động ôm sát ảnh */
-            display: none; 
+        /* Hình ảnh hiển thị */
+        #imageDisplay {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Đảm bảo giữ nguyên tỷ lệ ảnh, không bị méo */
+            border-radius: 8px; /* Bo góc cực nhẹ */
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08); /* Viền kính 1px + đổ bóng sâu */
+            
+            /* Hiệu ứng xuất hiện */
             opacity: 0;
-            transform: scale(0.95);
-            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: scale(0.97) translateY(10px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            display: none;
+            z-index: 10;
         }
         
-        /* Class kích hoạt hiệu ứng mượt khi ảnh load xong */
         #imageDisplay.loaded {
             opacity: 1;
-            transform: scale(1);
+            transform: scale(1) translateY(0);
         }
         
-        /* Trạng thái tải đẹp mắt (Glow Ring) */
+        /* Hiệu ứng Đang tải (Loading) */
         .loading-state { 
-            display: flex; flex-direction: column; align-items: center; gap: 20px; 
-            color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 400; letter-spacing: 1px;
             position: absolute;
+            display: flex; flex-direction: column; align-items: center; gap: 15px; 
+            color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500; letter-spacing: 2px;
+            z-index: 5;
         }
-        .pulse-ring {
-            width: 45px; height: 45px; 
+        .modern-spinner {
+            width: 40px; height: 40px; 
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-1);
+            border-right-color: var(--accent-2);
             border-radius: 50%;
-            border: 2px solid rgba(139, 92, 246, 0.2);
-            border-top-color: var(--primary);
-            animation: spin 1s linear infinite, glow 2s ease-in-out infinite alternate;
+            animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes glow { 0% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.2); } 100% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.7); } }
 
-        /* ID tinh tế mờ ảo ở góc dưới (Watermark) */
-        .watermark-id {
+        /* Mã ID dạng Badge gọn gàng ở góc trên/dưới */
+        .photo-id-badge {
             position: absolute;
-            bottom: 25px;
+            bottom: 30px; /* Cách đáy màn hình */
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 11px;
-            color: rgba(255,255,255,0.4);
-            letter-spacing: 2px;
-            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 1px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             opacity: 0;
-            transition: opacity 1.5s ease;
+            transition: opacity 1s ease 0.3s; /* Hiện ra sau khi ảnh đã lên */
             pointer-events: none;
+            z-index: 20;
         }
-        .watermark-id.show { opacity: 1; }
+        .photo-id-badge.show { opacity: 1; }
+
+        /* Thông báo lỗi */
+        .error-state {
+            color: #f87171;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
     </style>
 </head>
 <body>
-    <div class="aurora-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
+    <!-- Nền không gian -->
+    <div class="ambient-background">
+        <div class="ambient-glow glow-left"></div>
+        <div class="ambient-glow glow-right"></div>
+    </div>
 
-    <div class="viewer-container">
+    <!-- Khung chứa ảnh căn giữa tuyệt đối -->
+    <div class="viewer-box">
+        
         <div class="loading-state" id="loadingState">
-            <div class="pulse-ring"></div>
-            <p>ĐANG GIẢI MÃ...</p>
+            <div class="modern-spinner"></div>
+            <p>ĐANG HIỂN THỊ</p>
         </div>
+
+        <div class="error-state" id="errorState"></div>
         
-        <img id="imageDisplay" src="" alt="View">
+        <img id="imageDisplay" src="" alt="Photo">
         
-        <div class="watermark-id" id="watermarkId"></div>
+        <div class="photo-id-badge" id="photoIdBadge"></div>
+
     </div>
 
     <script>
@@ -115,11 +154,18 @@
         const imageId = urlParams.get('id');
 
         const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
         const imageDisplay = document.getElementById('imageDisplay');
-        const watermarkId = document.getElementById('watermarkId');
+        const photoIdBadge = document.getElementById('photoIdBadge');
+
+        function showError(msg) {
+            loadingState.style.display = 'none';
+            errorState.style.display = 'block';
+            errorState.innerHTML = `⚠️ ${msg}`;
+        }
 
         if (imageId) {
-            watermarkId.textContent = "ID: " + imageId;
+            photoIdBadge.textContent = "ID: " + imageId;
 
             fetch(APPS_SCRIPT_URL + "?id=" + imageId)
             .then(res => res.json())
@@ -129,22 +175,20 @@
                     imageDisplay.src = data.base64Image;
                     imageDisplay.style.display = 'block';
                     
-                    // Kích hoạt hiệu ứng Cinematic bùng nổ khi ảnh load xong
+                    // Delay nhẹ để áp dụng hiệu ứng mượt mà
                     setTimeout(() => {
                         imageDisplay.classList.add('loaded');
-                        watermarkId.classList.add('show');
+                        photoIdBadge.classList.add('show');
                     }, 50);
 
                 } else {
-                    loadingState.style.display = 'flex';
-                    loadingState.innerHTML = '<p style="color:#f87171">⚠️ ẢNH KHÔNG TỒN TẠI</p>';
+                    showError("Ảnh không tồn tại hoặc đã bị xóa");
                 }
             }).catch(() => {
-                loadingState.style.display = 'flex';
-                loadingState.innerHTML = '<p style="color:#f87171">⚠️ LỖI KẾT NỐI MẠNG</p>';
+                showError("Lỗi kết nối mạng, vui lòng tải lại trang");
             });
         } else {
-            loadingState.innerHTML = '<p style="color:#f87171">⚠️ LINK KHÔNG HỢP LỆ</p>';
+            showError("Đường dẫn không hợp lệ (Thiếu ID ảnh)");
         }
     </script>
 </body>
