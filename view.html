@@ -7,75 +7,105 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg: #050505; 
+            --bg: #030303; 
             --primary: #8b5cf6; 
             --secondary: #3b82f6; 
-            --glass-bg: rgba(255, 255, 255, 0.03); 
-            --glass-border: rgba(255, 255, 255, 0.08); 
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
             min-height: 100vh; display: flex; justify-content: center; align-items: center; 
-            background: var(--bg); color: #fff; padding: 10px; overflow: hidden; 
+            background: var(--bg); color: #fff; padding: 0; margin: 0; overflow: hidden; 
         }
         
-        /* Nền Aurora */
-        .aurora-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: #000; overflow: hidden; }
-        .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5; animation: float 10s infinite ease-in-out alternate; }
-        .orb-1 { width: 300px; height: 300px; background: var(--primary); top: -50px; left: -50px; }
-        .orb-2 { width: 400px; height: 400px; background: var(--secondary); bottom: -100px; right: -100px; animation-delay: -5s; }
-        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(50px, 50px) scale(1.2); } }
+        /* Nền Aurora mượt mà hơn, tối hơn để tôn bức ảnh */
+        .aurora-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: radial-gradient(circle at center, #111 0%, #000 100%); overflow: hidden; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.35; animation: float 12s infinite ease-in-out alternate; }
+        .orb-1 { width: 40vw; height: 40vw; background: var(--primary); top: -10%; left: -10%; }
+        .orb-2 { width: 50vw; height: 50vw; background: var(--secondary); bottom: -20%; right: -10%; animation-delay: -6s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 50px) scale(1.1); } }
 
-        /* Khung hiển thị ảnh mở rộng */
-        .glass-card { 
-            background: var(--glass-bg); 
-            backdrop-filter: blur(30px); 
-            -webkit-backdrop-filter: blur(30px); 
-            border: 1px solid var(--glass-border); 
-            border-radius: 24px; 
-            padding: 12px; /* Thu hẹp viền để ảnh to hơn */
-            width: 98%; 
-            max-width: 800px; /* Tăng giới hạn chiều rộng tối đa */
-            text-align: center; 
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6); 
-            animation: fadeIn 0.8s; 
+        /* Container hiển thị ảnh Full màn hình */
+        .viewer-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px; /* Khoảng cách lề rất nhỏ để ảnh to hết cỡ */
+            position: relative;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .image-wrapper { 
-            border-radius: 16px; overflow: hidden; position: relative; 
-            border: 1px solid rgba(255,255,255,0.05); 
-            background: rgba(0,0,0,0.3); min-height: 200px; 
-            display: flex; justify-content: center; align-items: center; 
-        }
-        
-        .image-wrapper img { 
-            width: 100%; 
-            max-height: 85vh; /* Cho phép ảnh cao tối đa 85% màn hình */
+        /* Bức ảnh được thiết kế kiểu Cinematic (Trôi nổi) */
+        #imageDisplay { 
+            max-width: 100%; 
+            max-height: 100%; 
             object-fit: contain; 
+            border-radius: 12px; /* Bo góc nhẹ thanh lịch */
+            box-shadow: 0 40px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.1); /* Viền kính siêu mỏng 1px tự động ôm sát ảnh */
             display: none; 
-            border-radius: 14px;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         
-        /* Trạng thái tải */
-        .loading-state { display: flex; flex-direction: column; align-items: center; gap: 15px; color: #a1a1aa; font-size: 14px; }
-        .spinner { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        /* Class kích hoạt hiệu ứng mượt khi ảnh load xong */
+        #imageDisplay.loaded {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        /* Trạng thái tải đẹp mắt (Glow Ring) */
+        .loading-state { 
+            display: flex; flex-direction: column; align-items: center; gap: 20px; 
+            color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 400; letter-spacing: 1px;
+            position: absolute;
+        }
+        .pulse-ring {
+            width: 45px; height: 45px; 
+            border-radius: 50%;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite, glow 2s ease-in-out infinite alternate;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes glow { 0% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.2); } 100% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.7); } }
+
+        /* ID tinh tế mờ ảo ở góc dưới (Watermark) */
+        .watermark-id {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 2px;
+            border: 1px solid rgba(255,255,255,0.05);
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            pointer-events: none;
+        }
+        .watermark-id.show { opacity: 1; }
     </style>
 </head>
 <body>
     <div class="aurora-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
 
-    <div class="glass-card">
-        <div class="image-wrapper" id="imageWrapper">
-            <div class="loading-state" id="loadingState">
-                <div class="spinner"></div>
-                <p>Đang tải ảnh an toàn...</p>
-            </div>
-            <img id="imageDisplay" src="" alt="View">
+    <div class="viewer-container">
+        <div class="loading-state" id="loadingState">
+            <div class="pulse-ring"></div>
+            <p>ĐANG GIẢI MÃ...</p>
         </div>
+        
+        <img id="imageDisplay" src="" alt="View">
+        
+        <div class="watermark-id" id="watermarkId"></div>
     </div>
 
     <script>
@@ -86,8 +116,11 @@
 
         const loadingState = document.getElementById('loadingState');
         const imageDisplay = document.getElementById('imageDisplay');
+        const watermarkId = document.getElementById('watermarkId');
 
         if (imageId) {
+            watermarkId.textContent = "ID: " + imageId;
+
             fetch(APPS_SCRIPT_URL + "?id=" + imageId)
             .then(res => res.json())
             .then(data => {
@@ -95,16 +128,23 @@
                 if(data.status === "success" && data.base64Image) {
                     imageDisplay.src = data.base64Image;
                     imageDisplay.style.display = 'block';
+                    
+                    // Kích hoạt hiệu ứng Cinematic bùng nổ khi ảnh load xong
+                    setTimeout(() => {
+                        imageDisplay.classList.add('loaded');
+                        watermarkId.classList.add('show');
+                    }, 50);
+
                 } else {
                     loadingState.style.display = 'flex';
-                    loadingState.innerHTML = '<p style="color:#f87171">⚠️ Ảnh không tồn tại hoặc đã bị xóa</p>';
+                    loadingState.innerHTML = '<p style="color:#f87171">⚠️ ẢNH KHÔNG TỒN TẠI</p>';
                 }
             }).catch(() => {
                 loadingState.style.display = 'flex';
-                loadingState.innerHTML = '<p style="color:#f87171">⚠️ Lỗi mạng, vui lòng thử lại!</p>';
+                loadingState.innerHTML = '<p style="color:#f87171">⚠️ LỖI KẾT NỐI MẠNG</p>';
             });
         } else {
-            loadingState.innerHTML = '<p style="color:#f87171">⚠️ Link không hợp lệ (Thiếu mã ID)</p>';
+            loadingState.innerHTML = '<p style="color:#f87171">⚠️ LINK KHÔNG HỢP LỆ</p>';
         }
     </script>
 </body>
